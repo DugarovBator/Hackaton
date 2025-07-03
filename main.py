@@ -52,6 +52,7 @@ class GameScene(Scene):
         self.player = pg.AnimatedSprite("player_sheet.png", (21, 21))
         self.player.add_animation("stance", [0], fps=8, loop=True)
         self.player.add_animation("walk", [1, 7, 8, 9], fps=8, loop=True)
+        self.player.add_animation("run", [1, 7, 8, 9], fps=24, loop=True)
         self.player.add_animation("jump", [9, 10], fps=10, loop=False)
         self.player.add_animation("duck", [2, 3], fps=100, loop=False)
         self.player.add_animation("teleport1", [2], fps=10, loop=False)
