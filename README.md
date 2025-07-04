@@ -24,21 +24,48 @@ Duality - это 2D платформер с механикой телепорт�
 - pygame 2.6.1
 
 ## Установка
+### Windows
 1. Клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/DugarovBator/Hackaton
+git clone https://github.com/DugarovBator/Hackaton.git
+```
+```bash
 cd Hackaton
 ```
 2. Установите зависимости:
-
+```bash
+venv\Scripts\activate
+```
 ```bash
 pip install -r requirements.txt
 ```
 3. Запустите игру:
 
 ```bash
-python main.py
+python app.py
+```
+
+### macOS / Linux
+1. Клонируйте репозиторий:
+
+```bash
+git clone https://github.com/DugarovBator/Hackaton.git
+```
+```bash
+cd Hackaton
+```
+2. Установите зависимости:
+```bash
+source venv/bin/activate
+```
+```bash
+pip install -r requirements.txt
+```
+3. Запустите игру:
+
+```bash
+python3 app.py
 ```
 
 ## Структура проекта
