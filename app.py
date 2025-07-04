@@ -17,7 +17,7 @@ TELEPORT_COOLDOWN_TIME = 0.5
 # Инициализация игры
 game = pg.Game(WIDTH, HEIGHT, "Duality", FPS, background_image="assets/background.png")
 
-BACKGROUND = pygame.transform.scale(pygame.image.load("assets/background.png").convert(), (WIDTH, HEIGHT))
+background = pygame.transform.scale(pygame.image.load("assets/background.png").convert(), (WIDTH, HEIGHT))
 # Создание менеджера сцен
 scene_manager = SceneManager()
 scene = "game"
@@ -215,7 +215,7 @@ class GameScene(Scene):
     def draw(self, screen):
         # Фон игры
         screen.fill(BLACK)
-        screen.blit(BACKGROUND, (0, 0))
+        screen.blit(background, (0, 0))
         
         # # Отрисовка игрока
         screen.blit(self.player.image, self.player.rect)
@@ -235,6 +235,7 @@ class FirstScene(GameScene):
         self.door = pg.AnimatedSprite("assets/doors.png", (21, 42))
         self.key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
         self.close_key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
+        self.sign = pg.AnimatedSprite("assets/right_sign.png", (21, 21))
 
         self.door.add_animation("closed", [0], fps=1, loop=True)
         self.door.add_animation("open", [1], fps=1, loop=True)
@@ -251,23 +252,27 @@ class FirstScene(GameScene):
         self.door.set_scale(3.0)
         self.key.set_scale(2.0)
         self.close_key.set_scale(2.0)
+        self.sign.set_scale(2.0)
 
         self.initial_ground_x = WIDTH - (self.door.frame_size[1] * self.door.scale) / 2
         self.initial_ground_y = HEIGHT / 2 - (self.door.frame_size[1] * self.door.scale) / 2
         self.door.set_position(self.initial_ground_x, self.initial_ground_y)
         self.close_key.set_position(self.initial_ground_x, self.initial_ground_y - (self.door.frame_size[1] * self.door.scale) / 2)
 
+        self.initial_ground_y = HEIGHT / 2 - (self.sign.frame_size[1] * self.sign.scale) / 2
+        self.sign.set_position(self.initial_ground_x - 100, self.initial_ground_y)
 
         self.initial_ground_y = HEIGHT - (self.key.frame_size[1] * self.key.scale)
         self.key.set_position(WIDTH / 2, self.initial_ground_y)
         
-        game.add_sprite([self.door, self.key, self.close_key])
+        game.add_sprite([self.door, self.key, self.close_key, self.sign])
         
         self.is_complete = False
     def new_update(self, screen):
         if self.player.collides_with(self.key) and not self.is_complete:
             self.key.play_animation("no_key")
             self.close_key.play_animation("key")
+            self.door.play_animation("open")
             self.is_complete = True
         if self.player.collides_with(self.door) and self.is_complete:
             screen.fill(BLACK)
@@ -278,74 +283,14 @@ class FirstScene(GameScene):
         screen.blit(self.key.image, self.key.rect)
         screen.blit(self.close_key.image, self.close_key.rect)
         
-        
-        
-class SecondScene(GameScene):
-    def __init__(self):
-        super().__init__()
-        self.door = pg.AnimatedSprite("assets/doors.png", (21, 42))
-        self.key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
-        self.close_key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
-
-        self.door.add_animation("closed", [0], fps=1, loop=True)
-        self.door.add_animation("open", [1], fps=1, loop=True)
-        self.door.play_animation("closed")
-        
-        self.key.add_animation("key", [0], fps=1, loop=True)
-        self.key.add_animation("no_key", [1], fps=1, loop=True)
-        self.key.play_animation("key")
-        
-        self.close_key.add_animation("key", [0], fps=1, loop=True)
-        self.close_key.add_animation("no_key", [1], fps=1, loop=True)
-        self.close_key.play_animation("no_key")
-        
-        self.door.set_scale(3.0)
-        self.key.set_scale(2.0)
-        self.close_key.set_scale(2.0)
-
-        self.initial_ground_x = WIDTH - (self.door.frame_size[1] * self.door.scale) / 2
-        self.initial_ground_y = HEIGHT / 2 - (self.door.frame_size[1] * self.door.scale) / 2
-        self.door.set_position(self.initial_ground_x, self.initial_ground_y)
-        self.close_key.set_position(self.initial_ground_x, self.initial_ground_y - (self.door.frame_size[1] * self.door.scale) / 2)
-
-
-        self.initial_ground_y = HEIGHT - (self.key.frame_size[1] * self.key.scale)
-        self.key.set_position(WIDTH / 2, self.initial_ground_y)
-        
-        game.add_sprite([self.door, self.key, self.close_key])
-        
-        self.is_complete = False
-    def new_update(self, screen):
-        if self.player.collides_with(self.key) and not self.is_complete:
-            self.key.play_animation("no_key")
-            self.close_key.play_animation("key")
-            self.is_complete = True
-        if self.player.collides_with(self.door) and self.is_complete:
-            screen.fill(BLACK)
-            
-    def draw(self, screen):
-        self.new_update(screen)
-        screen.blit(self.door.image, self.door.rect)
-        screen.blit(self.key.image, self.key.rect)
-        screen.blit(self.close_key.image, self.close_key.rect)
-        
-
-
-
-
-
 
 
 # Создание и добавление сцен в менеджер
 menu_scene = MenuScene()
-# game_scene = GameScene()
 first_scene = FirstScene()
-# second_scene = SecondScene()
 
 scene_manager.add_scene(menu_scene)
-# scene_manager.add_scene(game_scene)
 scene_manager.add_scene(first_scene)
-# scene_manager.add_scene(second_scene)
 
 # Установка начальной сцены
 scene_manager.switch_to("menu")
