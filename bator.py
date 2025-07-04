@@ -17,37 +17,30 @@ TELEPORT_COOLDOWN_TIME = 0.5
 # Инициализация игры
 game = pg.Game(WIDTH, HEIGHT, "Duality", FPS, background_image="assets/background.png")
 
-BACKGROUND = pygame.transform.scale(pygame.image.load("assets/background.png").convert(), (WIDTH, HEIGHT))
+background = pygame.transform.scale(pygame.image.load("assets/background.png").convert(), (WIDTH, HEIGHT))
 # Создание менеджера сцен
 scene_manager = SceneManager()
-scene = "game"
+
+def start():
+    scene_manager.switch_to("game")
 
 class MenuScene(Scene):
     """Сцена главного меню"""
     
     def __init__(self):
         super().__init__("menu")
-        self.title_text = "ГЛАВНОЕ МЕНЮ"
-        self.instruction_text = "Нажмите ПРОБЕЛ для перехода в игру"
+        self.title_text = "Duality"
+        self.instruction_text = "Duality - это игра"
         
-        self.btn_start = pg.Button(340, 480, 120, 35, "Играть",color=(50, 50, 150), hover_color=(80, 80, 200))
-        self.btn_start.set_font(None)
+        self.btn_start = pg.Button(340, 480, 120, 35, "Играть",color=(50, 50, 150), hover_color=(80, 80, 200), callback=start)
 
-        self.btn_quit = pg.Button(340, 520, 120, 35, "Выход", color=(50, 50, 150), hover_color=(80, 80, 200))
-        self.btn_quit.set_font(None)
+        self.btn_quit = pg.Button(340, 520, 120, 35, "Выход", color=(50, 50, 150), hover_color=(80, 80, 200), callback=game.quit)
 
+    
     def update(self, dt):
         self.btn_start.update(dt)
         self.btn_quit.update(dt)
         
-        # Переход в игру при нажатии пробела
-        keys = pygame.key.get_pressed()
-        # if self.btn_quit.handle_event(event=pygame.event.Event(kwargs=keys)):
-        #     print(1)
-
-        if keys[pygame.K_SPACE]:
-            scene_manager.switch_to(scene)
-
     
     def draw(self, screen):
         # Фон меню
@@ -57,18 +50,30 @@ class MenuScene(Scene):
         self.btn_quit.draw(game.screen)
         
         # Отображение заголовка (центрировано)
-        pg.Text(20, 20, self.title_text, size=32, color=(255, 255, 0)).draw(screen)
+        pg.Text(WIDTH / 2, HEIGHT / 2 - HEIGHT / 4, self.title_text, size=32, color=(255, 255, 0)).draw(screen)
         
         # Отображение инструкции (центрировано)
-        pg.Text(20, 60, self.instruction_text, size=20, color=(255, 255, 255)).draw(screen)
+        pg.Text(WIDTH / 2, HEIGHT / 2, self.instruction_text, size=20, color=(255, 255, 255)).draw(screen)
 
+    def handle_event(self, event):
+        self.btn_start.handle_event(event)
+        self.btn_quit.handle_event(event)
+
+def restart_menu():
+    menu_scene.btn_start.text = "Заново"
+    scene_manager.switch_to("menu")
+    first_scene.player.set_position(0, first_scene.initial_ground_y)
+    first_scene.is_complete = False
+    first_scene.key.play_animation("key")
+    first_scene.close_key.play_animation("no_key")
+    first_scene.door.play_animation("closed")
 
 class GameScene(Scene):
     """Игровая сцена"""
     
     def __init__(self):
         super().__init__("game")
-        self.instruction_text = "Нажмите ESC для возврата в меню"
+        self.instruction_text = "A/D - влево/вправо \nS - присесть\nQ/E - телепортация вверх/вниз\nShift + A/D - бег"
         
         # Создание игрока
         self.player = pg.AnimatedSprite("assets/player.png", (21, 21), (400, 300))
@@ -202,7 +207,7 @@ class GameScene(Scene):
     def draw(self, screen):
         # Фон игры
         screen.fill(BLACK)
-        screen.blit(BACKGROUND, (0, 0))
+        screen.blit(background, (0, 0))
 
         # # Отрисовка игрока
         screen.blit(self.player.image, self.player.rect)
@@ -217,6 +222,7 @@ class FirstScene(GameScene):
         self.door = pg.AnimatedSprite("assets/doors.png", (21, 42))
         self.key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
         self.close_key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
+        self.sign = pg.AnimatedSprite("assets/right_sign.png", (21, 21))
 
         self.door.add_animation("closed", [0], fps=1, loop=True)
         self.door.add_animation("open", [1], fps=1, loop=True)
@@ -233,75 +239,30 @@ class FirstScene(GameScene):
         self.door.set_scale(3.0)
         self.key.set_scale(2.0)
         self.close_key.set_scale(2.0)
+        self.sign.set_scale(2.0)
 
         self.initial_ground_x = WIDTH - (self.door.frame_size[1] * self.door.scale) / 2
         self.initial_ground_y = HEIGHT / 2 - (self.door.frame_size[1] * self.door.scale) / 2
         self.door.set_position(self.initial_ground_x, self.initial_ground_y)
         self.close_key.set_position(self.initial_ground_x, self.initial_ground_y - (self.door.frame_size[1] * self.door.scale) / 2)
 
+        self.initial_ground_y = HEIGHT / 2 - (self.sign.frame_size[1] * self.sign.scale) / 2
+        self.sign.set_position(self.initial_ground_x - 100, self.initial_ground_y)
 
         self.initial_ground_y = HEIGHT - (self.key.frame_size[1] * self.key.scale)
         self.key.set_position(WIDTH / 2, self.initial_ground_y)
 
-        game.add_sprite([self.door, self.key, self.close_key])
+        game.add_sprite([self.door, self.key, self.close_key, self.sign])
 
         self.is_complete = False
-    def new_update(self, screen):
+    def new_update(self):
         if self.player.collides_with(self.key) and not self.is_complete:
             self.key.play_animation("no_key")
             self.close_key.play_animation("key")
+            self.door.play_animation("open")
             self.is_complete = True
         if self.player.collides_with(self.door) and self.is_complete:
-            screen.fill(BLACK)
-            
-    def draw(self, screen):
-        self.new_update(screen)
-        screen.blit(self.door.image, self.door.rect)
-        screen.blit(self.key.image, self.key.rect)
-        screen.blit(self.close_key.image, self.close_key.rect)
-
-
-class SecondScene(GameScene):
-    def __init__(self):
-        super().__init__()
-        self.door = pg.AnimatedSprite("assets/doors.png", (21, 42))
-        self.key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
-        self.close_key = pg.AnimatedSprite("assets/yellow_keys.png", (21, 21))
-
-        self.door.add_animation("closed", [0], fps=1, loop=True)
-        self.door.add_animation("open", [1], fps=1, loop=True)
-        self.door.play_animation("closed")
-        
-        self.key.add_animation("key", [0], fps=1, loop=True)
-        self.key.add_animation("no_key", [1], fps=1, loop=True)
-        self.key.play_animation("key")
-        
-        self.close_key.add_animation("key", [0], fps=1, loop=True)
-        self.close_key.add_animation("no_key", [1], fps=1, loop=True)
-        self.close_key.play_animation("no_key")
-        
-        self.door.set_scale(3.0)
-        self.key.set_scale(2.0)
-        self.close_key.set_scale(2.0)
-
-        self.initial_ground_x = WIDTH - (self.door.frame_size[1] * self.door.scale) / 2
-        self.initial_ground_y = HEIGHT / 2 - (self.door.frame_size[1] * self.door.scale) / 2
-        self.door.set_position(self.initial_ground_x, self.initial_ground_y)
-        self.close_key.set_position(self.initial_ground_x, self.initial_ground_y - (self.door.frame_size[1] * self.door.scale) / 2)
-
-        self.initial_ground_y = HEIGHT - (self.key.frame_size[1] * self.key.scale)
-        self.key.set_position(WIDTH / 2, self.initial_ground_y)
-        
-        game.add_sprite([self.door, self.key, self.close_key])
-        
-        self.is_complete = False
-    def new_update(self, screen):
-        if self.player.collides_with(self.key) and not self.is_complete:
-            self.key.play_animation("no_key")
-            self.close_key.play_animation("key")
-            self.is_complete = True
-        if self.player.collides_with(self.door) and self.is_complete:
-            screen.fill(BLACK)
+            restart_menu()
             
     def draw(self, screen):
         self.new_update(screen)
@@ -309,30 +270,25 @@ class SecondScene(GameScene):
         screen.blit(self.key.image, self.key.rect)
         screen.blit(self.close_key.image, self.close_key.rect)
         
+    
 
 
 # Создание и добавление сцен в менеджер
 menu_scene = MenuScene()
-# game_scene = GameScene()
 first_scene = FirstScene()
-# second_scene = SecondScene()
-
 scene_manager.add_scene(menu_scene)
-# scene_manager.add_scene(game_scene)
 scene_manager.add_scene(first_scene)
-# scene_manager.add_scene(second_scene)
 
 # Установка начальной сцены
 scene_manager.switch_to("menu")
-
 
 def update():
     dt = game.get_delta_time()
     scene_manager.update(dt)
 
-
 def draw():
     scene_manager.draw(game.screen)
 
+game.add_event_callback(menu_scene.handle_event)
 # Запуск игры
 game.run(update, draw) 
